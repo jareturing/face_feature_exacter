@@ -35,6 +35,11 @@ def load_image(img_path):
     image = cv2.imread(img_path)
     if image is None:
         return None
+    h,w,c=image.shape
+    assert h==w,"image need high == width"
+    # print(h,w,c)
+    if h!=112 or w!=112:
+        image=cv2.resize(image,(112,112))
     image = image.transpose((2, 0, 1))#
     image = image[np.newaxis,:,  :, :]
     image = image.astype(np.float32, copy=False)
@@ -47,7 +52,7 @@ def get_featurs(model, test_list, batch_size=10):
     images = None
     features = None
     cnt = 0
-    for i, img_path in enumerate(test_list):
+    for i, img_path in tqdm(enumerate(test_list)):
         # print(img_path)
         image = load_image(img_path)
         if image is None:
@@ -59,7 +64,7 @@ def get_featurs(model, test_list, batch_size=10):
             images = np.concatenate((images, image), axis=0)
 
         if images.shape[0] % batch_size == 0 or i == len(test_list) - 1:
-            print (images.shape)
+            # print (images.shape)
             cnt += 1
 
             data = torch.from_numpy(images)
@@ -139,8 +144,9 @@ def test_performance(fe_dict, pair_list):
     return acc, th
 
 
-def lfw_test(model, img_paths, identity_list, compair_list, batch_size):
+def lfw_test(model, img_path, identity_list, compair_list, batch_size):
     s = time.time()
+    img_paths=[os.path.join(img_path,id) for id in identity_list]
     features, cnt = get_featurs(model, img_paths, batch_size=batch_size)
     print(features.shape)
     t = time.time() - s
@@ -154,12 +160,16 @@ if __name__ == '__main__':
 
     opt = config.Config()
     image_dir="images"
-    image_names = glob.glob(os.path.join(image_dir, '*/*.jpg'))
+    image_names = glob.glob(os.path.join(image_dir, 'images/*/*.jpg'))
     model = Backbone(num_layers=50,embedding_dim=256, drop_ratio=0.6)
     load_model(model, opt.test_model_path)
     model.to(torch.device("cuda"))
-    feature, cnt = get_featurs(model, test_list=image_names, batch_size=10)
-    print(feature.shape)
+    # feature, cnt = get_featurs(model, test_list=image_names, batch_size=10)
+    # print(feature.shape)
+    ################test per######################
+    lfw_images_names = glob.glob(os.path.join(opt.lfw_root, '*/*.jpg'))
+    data_list=get_lfw_list(opt.lfw_test_list)
+    acc=lfw_test(model,opt.lfw_root,data_list,opt.lfw_test_list,opt.test_batch_size)
 
 
 
