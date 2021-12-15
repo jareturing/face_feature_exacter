@@ -6,5 +6,4 @@ the pretrained model and the lfw test dataset can be download here. link: https:
 the pretrained model use resnet-50 without se. Please modify the path of the lfw dataset in config.py before you run test.py.
 # lfw test result:
 (7701, 256)
-total time is 45.43666458129883, average time is 0.09426693896535027
 lfw face verification accuracy:  0.908 threshold:  0.13296388
